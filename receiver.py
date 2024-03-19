@@ -36,7 +36,8 @@ def main():
 
             # special case because cd is a shell built-in
             if args[0] == 'cd':
-                os.chdir(args[1])
+                if len(args) > 1 :
+                    os.chdir(args[1])
                 client_socket.send(" \b".encode())
             else:
                 try:
