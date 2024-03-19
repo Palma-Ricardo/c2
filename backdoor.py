@@ -4,7 +4,6 @@ import os
 import subprocess, shlex
 
 def receiver():
-    # x = 1
     host = "127.0.0.1"
     port = int(sys.argv[2])
 
@@ -39,10 +38,10 @@ def receiver():
             else:
                 proc = subprocess.run(args, capture_output=True, text=True)
 
-            if len(proc.stdout) > 0:
-                client_socket.sendall(proc.stdout.encode())
-            else:
-                client_socket.sendall("\n".encode())
+                if len(proc.stdout) > 0:
+                    client_socket.sendall(proc.stdout.encode())
+                else:
+                    client_socket.sendall("\n".encode())
         else:
             # if no data was received, or if the client closed the connection,
             # reset the socket
