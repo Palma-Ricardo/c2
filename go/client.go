@@ -10,8 +10,10 @@ import (
 )
 
 func main() {
+    // Get command line arguments
     host := flag.String("host", "0.0.0.0", "Host to connect to")
     port := flag.String("port", "4444", "Port to connect on")
+    flag.Parse()
 
     client(*host, *port)
 }

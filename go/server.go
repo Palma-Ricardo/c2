@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
+    // Get command line arguments
     host := flag.String("host", "0.0.0.0", "Host to listen on")
     port := flag.String("port", "4444", "Port to listen on")
+    flag.Parse()
 
     server(*host, *port)
 }
