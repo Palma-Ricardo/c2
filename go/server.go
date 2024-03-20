@@ -74,12 +74,15 @@ func server(host, port string) {
                 switch e := err.(type) {
                 case *exec.Error:
                     connection.Write([]byte(err.Error() + "\n"))
+                    continue
                 case *exec.ExitError:
                     connection.Write([]byte(fmt.Sprintf("command exited with %d\n", e.ExitCode()))) 
+                    continue
                 default:
                     errors, _ := io.ReadAll(procErr)
                     connection.Write(errors) 
                     procErr.Close()
+                    continue
                 }
             }
 
