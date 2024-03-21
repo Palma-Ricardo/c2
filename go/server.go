@@ -3,7 +3,6 @@ package main
 import (
     "fmt"
     "net"
-    "io"
     "os"
     "os/exec"
     "flag"
@@ -67,24 +66,7 @@ func server(host, port string) {
             connection.Write([]byte(" \b"))
         } else {
             proc := exec.Command(args[0], args[1:]...)
-            procErr, _ := proc.StderrPipe()
-            output, err := proc.Output()
-
-            if err != nil {
-                switch e := err.(type) {
-                case *exec.Error:
-                    connection.Write([]byte(err.Error() + "\n"))
-                    continue
-                case *exec.ExitError:
-                    connection.Write([]byte(fmt.Sprintf("command exited with %d\n", e.ExitCode()))) 
-                    continue
-                default:
-                    errors, _ := io.ReadAll(procErr)
-                    connection.Write(errors) 
-                    procErr.Close()
-                    continue
-                }
-            }
+            output, _ := proc.CombinedOutput()
 
             if len(output) > 0 {
                 connection.Write(output)
