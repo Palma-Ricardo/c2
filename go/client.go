@@ -10,47 +10,75 @@ import (
 )
 
 func main() {
-    // Get command line arguments
-    host := flag.String("host", "0.0.0.0", "Host to connect to")
-    port := flag.String("port", "4444", "Port to connect on")
-    flag.Parse()
+	// Get command line arguments
+	host := flag.String("host", "0.0.0.0", "Host to connect to")
+	port := flag.String("port", "4444", "Port to connect on")
+	flag.Parse()
 
-    client(*host, *port)
+	client(*host, *port)
 }
 
 func client(host, port string) {
-    // create a socket connection
-    connection, err := net.Dial("tcp", host + ":" + port)
-    if err != nil {
-        panic(err)
-    }
-    defer connection.Close()
+	// create a socket connection
+	connection, err := net.Dial("tcp", host+":"+port)
+	if err != nil {
+		panic(err)
+	}
+	defer connection.Close()
 
-    fmt.Println("Connected to remote host " + host + " on port " + port)
-    fmt.Println("Enter 'quit', 'exit', or 'q' to disconnect")
+	fmt.Println("Connected to remote host " + host + " on port " + port)
+	fmt.Println("Enter 'quit', 'exit', or 'q' to disconnect")
 
-    // create reader for input
-    reader := bufio.NewReader(os.Stdin)
+	// create reader for input
+	reader := bufio.NewReader(os.Stdin)
 
-    for {
-        fmt.Print(">>> ")
-        message, _ := reader.ReadString('\n')
-        message = strings.Replace(message, "\n", "", -1)
+	// Print the password prompt
+	prompt := make([]byte, 1024)
+	mLen, _ := connection.Read(prompt)
+	fmt.Println(string(prompt[:mLen]))
 
-        if message == "quit" || message == "exit" || message == "q" {
-            break
-        } 
+	auth := false
+	tries := 0
 
-        if len(message) > 0 {
-            connection.Write([]byte(message))
+	for !auth {
+		fmt.Print(">>> ")
+		message, _ := reader.ReadString('\n')
+		tries++
+		connection.Write([]byte(message))
 
-            response := make([]byte, 4096)
-            responseLen, err := connection.Read(response)
-            if err != nil {
-                fmt.Println("Error reading response:", err.Error())
-            }
+		response := make([]byte, 1024)
+		mLen, _ := connection.Read(response)
 
-            fmt.Print(string(response[:responseLen]))
-        }
-    }
+		comfirmation := string(response[:mLen])
+        fmt.Println(comfirmation)
+		if comfirmation == "Confirmed" {
+			auth = true
+		}
+
+		if tries >= 3 {
+			return
+		}
+	}
+
+	for {
+		fmt.Print(">>> ")
+		message, _ := reader.ReadString('\n')
+		message = strings.Replace(message, "\n", "", -1)
+
+		if message == "quit" || message == "exit" || message == "q" {
+			break
+		}
+
+		if len(message) > 0 {
+			connection.Write([]byte(message))
+
+			response := make([]byte, 4096)
+			responseLen, err := connection.Read(response)
+			if err != nil {
+				fmt.Println("Error reading response:", err.Error())
+			}
+
+			fmt.Print(string(response[:responseLen]))
+		}
+	}
 }
