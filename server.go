@@ -93,11 +93,9 @@ func authenticate_user(connection net.Conn) bool {
 	connection.Write([]byte("Please enter the password"))
 	for i := 0; i < 3; i++ {
 		buffer := make([]byte, 16)
-		fmt.Println("Buffer:", buffer)
 		mLen, _ := connection.Read(buffer)
 
 		password := buffer[:mLen-1]
-		fmt.Println("Password:", string(password))
 		diff := bcrypt.CompareHashAndPassword([]byte(HASH), password)
 		if diff == nil {
 			connection.Write([]byte("Confirmed"))
