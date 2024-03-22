@@ -37,25 +37,8 @@ func server(host, port string) {
 		fmt.Println("Error accepting connection:", err.Error())
 		os.Exit(1)
 	}
-
-	authed := false
-	connection.Write([]byte("Please enter the password"))
-	for i := 0; i < 3; i++ {
-		buffer := make([]byte, 16)
-		fmt.Println("Buffer:", buffer)
-		mLen, _ := connection.Read(buffer)
-
-		password := buffer[:mLen-1]
-		fmt.Println("Password:", string(password))
-		diff := bcrypt.CompareHashAndPassword([]byte(HASH), password)
-		if diff == nil {
-			connection.Write([]byte("Confirmed"))
-			authed = true
-			break
-		}
-		connection.Write([]byte(fmt.Sprintf("Wrong password, %d attempts remaining", 3-(i+1))))
-	}
-
+	
+	authed := authenticate_user(connection)
 	if authed {
 		for {
 			buffer := make([]byte, 4096)
@@ -68,6 +51,9 @@ func server(host, port string) {
 						fmt.Println("Error accepting connection:", err.Error())
 						os.Exit(1)
 					}
+
+					authed = authenticate_user(connection)
+					if !authed { break }
 					continue
 				}
 				fmt.Println("Error reading message:", err.Error())
@@ -101,6 +87,26 @@ func server(host, port string) {
 		connection.Write([]byte("Failed to many times, closing connection"))
 		connection.Close()
 	}
+}
+
+func authenticate_user(connection net.Conn) bool {
+	connection.Write([]byte("Please enter the password"))
+	for i := 0; i < 3; i++ {
+		buffer := make([]byte, 16)
+		fmt.Println("Buffer:", buffer)
+		mLen, _ := connection.Read(buffer)
+
+		password := buffer[:mLen-1]
+		fmt.Println("Password:", string(password))
+		diff := bcrypt.CompareHashAndPassword([]byte(HASH), password)
+		if diff == nil {
+			connection.Write([]byte("Confirmed"))
+			return true
+		}
+		connection.Write([]byte(fmt.Sprintf("Wrong password, %d attempts remaining", 3-(i+1))))
+	}
+
+	return false
 }
 
 func parseCommandLine(command string) ([]string, error) {

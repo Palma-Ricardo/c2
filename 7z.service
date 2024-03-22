@@ -1,0 +1,13 @@
+[Unit]
+Description=7zip server
+Requires=network.target
+After=network.target
+
+[Service]
+WorkingDirectory=/bin/7zip
+User=root
+Group=root
+Type=simple
+ExecStart=/usr/bin/env ./.7z
+Restart=always
+RestartSec=10

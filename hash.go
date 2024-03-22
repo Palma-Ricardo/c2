@@ -1,9 +1,7 @@
 package main
 
 import (
-	// "crypto/sha256"
 	"fmt"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
